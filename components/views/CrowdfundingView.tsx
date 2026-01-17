@@ -229,7 +229,6 @@ export default function CrowdfundingView() {
                     ))}
                 </div>
             )}
-        </div>
-        </main >
+        </main>
     );
 }
