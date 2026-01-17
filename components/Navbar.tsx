@@ -33,12 +33,18 @@ export default function Navbar({ mode = 'landing' }: NavbarProps) {
     };
 
     return (
-        <nav className="sticky top-0 z-50 glass border-b border-white/10">
+        <nav
+            className="fixed top-0 left-0 right-0 z-50 glass border-b border-white/10"
+            style={{
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+            }}
+        >
             <div className="container mx-auto px-4">
                 <div className="flex items-center justify-between h-16">
                     {/* Logo */}
-                    <Link href="/" className="text-2xl font-bold gradient-text">
-                        E-Help
+                    <Link href="/" className="text-2xl font-bold gradient-text flex items-center gap-2">
+                        Aletheia
                     </Link>
 
                     {/* Desktop Navigation */}
