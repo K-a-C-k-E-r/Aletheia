@@ -34,8 +34,8 @@ export default function Home() {
       {/* Navbar */}
       <Navbar mode="landing" />
 
-      {/* Content wrapper with higher z-index */}
-      <div className="relative" style={{ zIndex: 1 }}>
+      {/* Content wrapper with higher z-index and top padding for fixed navbar */}
+      <div className="relative pt-16" style={{ zIndex: 1 }}>
 
         {/* Hero Section */}
         <section className="container mx-auto px-4 py-20 min-h-screen flex flex-col justify-center items-center text-center">

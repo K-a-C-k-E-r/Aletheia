@@ -44,40 +44,44 @@ export default function UnifiedAppPage() {
     }
 
     return (
-        <div className="min-h-screen" style={{ background: '#070709' }}>
+        <div className="min-h-screen relative overflow-hidden" style={{ background: '#070709' }}>
             {/* Starfield Background */}
             <StarfieldBackground />
 
             {/* Torch Cursor */}
             <TorchCursor />
 
+            {/* Inline Navbar */}
             <InlineNavbar activeTab={activeTab} onTabChange={setActiveTab} />
 
-            <AnimatePresence mode="wait">
-                {activeTab === 'borrow' ? (
-                    <motion.div
-                        key="borrow"
-                        variants={pageVariants}
-                        initial="initial"
-                        animate="animate"
-                        exit="exit"
-                        transition={{ duration: 0.3 }}
-                    >
-                        <BorrowView />
-                    </motion.div>
-                ) : (
-                    <motion.div
-                        key="crowdfunding"
-                        variants={pageVariants}
-                        initial="initial"
-                        animate="animate"
-                        exit="exit"
-                        transition={{ duration: 0.3 }}
-                    >
-                        <CrowdfundingView />
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            {/* Main Content - Add padding-top for fixed navbar */}
+            <div className="relative pt-16" style={{ zIndex: 1 }}>
+                <AnimatePresence mode="wait">
+                    {activeTab === 'borrow' ? (
+                        <motion.div
+                            key="borrow"
+                            variants={pageVariants}
+                            initial="initial"
+                            animate="animate"
+                            exit="exit"
+                            transition={{ duration: 0.3 }}
+                        >
+                            <BorrowView />
+                        </motion.div>
+                    ) : (
+                        <motion.div
+                            key="crowdfunding"
+                            variants={pageVariants}
+                            initial="initial"
+                            animate="animate"
+                            exit="exit"
+                            transition={{ duration: 0.3 }}
+                        >
+                            <CrowdfundingView />
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
         </div>
     );
 }

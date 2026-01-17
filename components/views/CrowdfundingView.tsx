@@ -1,56 +1,60 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Search, Filter, Plus, Heart, Shield, Users, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { Plus, Heart, TrendingUp, Shield, CheckCircle, AlertCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useWalletStore } from '@/store/walletStore';
 
-// Mock campaign data
-const mockCampaigns = [
-    {
-        id: 1,
-        title: 'Medical Aid for Children',
-        description: 'Help provide medical care for underprivileged children',
-        goal: '10',
-        raised: '7.5',
-        creator: '0x1234...5678',
-        image: '/api/placeholder/400/300',
-        trustScore: 85,
-        aiVerified: true,
-        communityApproved: true,
-    },
-    {
-        id: 2,
-        title: 'Education for Rural Kids',
-        description: 'Building a school in remote village',
-        goal: '15',
-        raised: '12.3',
-        creator: '0xabcd...efgh',
-        image: '/api/placeholder/400/300',
-        trustScore: 92,
-        aiVerified: true,
-        communityApproved: true,
-    },
-    {
-        id: 3,
-        title: 'Clean Water Project',
-        description: 'Providing clean water access to 1000 families',
-        goal: '20',
-        raised: '5.8',
-        creator: '0x9876...4321',
-        image: '/api/placeholder/400/300',
-        trustScore: 78,
-        aiVerified: true,
-        communityApproved: false,
-    },
-];
+interface Campaign {
+    id: string;
+    title: string;
+    description: string;
+    creator: string;
+    goal: string;
+    raised: string;
+    contributors: number;
+    trustScore: number;
+    aiVerified: boolean;
+    communityApproved: boolean;
+    ipfsHash?: string;
+}
 
 export default function CrowdfundingView() {
-    const [searchQuery, setSearchQuery] = useState('');
+    const { address, isConnected } = useWalletStore();
+    const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        fetchCampaigns();
+    }, []);
+
+    const fetchCampaigns = async () => {
+        setLoading(true);
+        setError(null);
+
+        try {
+            // TODO: Replace with real contract call
+            // const factory = getCampaignFactoryContract();
+            // const campaignData = await factory.getAllCampaigns();
+
+            // Simulate API delay
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // For now, set empty array - will be populated from blockchain
+            setCampaigns([]);
+        } catch (err) {
+            console.error('Failed to fetch campaigns:', err);
+            setError('Failed to load campaigns. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const getTrustColor = (score: number) => {
-        if (score >= 80) return '#22c55e';
-        if (score >= 60) return '#eab308';
+        if (score >= 70) return '#22c55e';
+        if (score >= 40) return '#eab308';
         return '#ef4444';
     };
 
@@ -64,8 +68,8 @@ export default function CrowdfundingView() {
                 </p>
             </motion.div>
 
-            {/* Two Main Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+            {/* Action Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
                 {/* Create Campaign Card */}
                 <Link href="/create">
                     <motion.div
@@ -133,59 +137,45 @@ export default function CrowdfundingView() {
                 </motion.div>
             </div>
 
-            {/* Search & Filter */}
-            <motion.div
-                className="flex flex-col md:flex-row gap-4 mb-8"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
-            >
-                <div className="flex-1 relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[hsl(var(--text-muted))]" />
-                    <input
-                        type="text"
-                        placeholder="Search campaigns..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="glass w-full pl-12 pr-4 py-3 rounded-lg text-white placeholder:text-[hsl(var(--text-muted))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] bg-black/20"
-                        style={{ border: '1px solid rgba(255,255,255,0.06)' }}
-                    />
-                </div>
-                <button className="glass glass-hover px-6 py-3 rounded-lg flex items-center gap-2">
-                    <Filter className="w-5 h-5" />
-                    <span>Filters</span>
-                </button>
-            </motion.div>
 
-            {/* Campaign Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {mockCampaigns.map((campaign, i) => (
-                    <Link key={campaign.id} href={`/campaign/${campaign.id}`}>
+            {/* Campaign Feed Section */}
+            <div className="mb-8">
+                <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-3xl font-bold">Active Campaigns</h2>
+                    {!loading && campaigns.length > 0 && (
+                        <button
+                            onClick={fetchCampaigns}
+                            className="glass glass-hover px-4 py-2 rounded-lg text-sm"
+                        >
+                            Refresh
+                        </button>
+                    )}
+                </div>
+            </div>
+
+            {/* Campaign Grid - Only shown when campaigns exist */}
+            {!loading && !error && campaigns.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {campaigns.map((campaign, i) => (
                         <motion.div
-                            className="card glass-hover cursor-pointer group overflow-hidden"
+                            key={campaign.id}
+                            className="card glass-hover cursor-pointer group"
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.4 + i * 0.1 }}
-                            whileHover={{ y: -8, boxShadow: '0 8px 32px rgba(96, 165, 250, 0.1)' }}
+                            transition={{ delay: i * 0.1 }}
+                            whileHover={{ y: -5 }}
                         >
-                            {/* Image Placeholder */}
-                            <div className="w-full h-48 rounded-lg mb-4 overflow-hidden" style={{ background: 'rgba(255,255,255,0.03)' }}>
-                                <div className="w-full h-full flex items-center justify-center text-[hsl(var(--text-muted))]">
-                                    <Heart className="w-12 h-12" />
-                                </div>
-                            </div>
-
                             {/* Trust Score Badge */}
-                            <div className="flex items-center gap-2 mb-3">
+                            <div className="flex items-center justify-between mb-4">
                                 <div
-                                    className="px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5"
+                                    className="px-3 py-1 rounded-full text-xs font-bold"
                                     style={{
-                                        background: `${getTrustColor(campaign.trustScore)}20`,
+                                        backgroundColor: `${getTrustColor(campaign.trustScore)}20`,
                                         color: getTrustColor(campaign.trustScore),
                                     }}
                                 >
-                                    <div className="w-1.5 h-1.5 rounded-full" style={{ background: getTrustColor(campaign.trustScore) }} />
-                                    Trust {campaign.trustScore}
+                                    <TrendingUp className="w-3 h-3 inline mr-1" />
+                                    Trust: {campaign.trustScore}
                                 </div>
                                 {campaign.aiVerified && (
                                     <div className="px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 bg-blue-500/20 text-blue-400">
@@ -208,7 +198,7 @@ export default function CrowdfundingView() {
                                 <div className="flex justify-between text-sm mb-2">
                                     <span className="text-[hsl(var(--text-secondary))]">Raised</span>
                                     <span className="font-semibold">
-                                        {campaign.raised} / {campaign.goal} ETH
+                                        {campaign.raised} / {campaign.goal} TAO
                                     </span>
                                 </div>
                                 <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)' }}>
@@ -236,9 +226,10 @@ export default function CrowdfundingView() {
                                 </div>
                             </div>
                         </motion.div>
-                    </Link>
-                ))}
-            </div>
-        </main>
+                    ))}
+                </div>
+            )}
+        </div>
+        </main >
     );
 }
