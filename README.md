@@ -1,5 +1,6 @@
 # 🌌 Aletheia
 
+
 **Truth-Verified Crowdfunding & Lending on the Bittensor Network**
 
 <p align="center">
