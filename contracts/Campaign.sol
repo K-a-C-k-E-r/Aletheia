@@ -198,7 +198,17 @@ contract Campaign {
     
     /**
      * @notice Get campaign status
-     * @return status Comprehensive campaign status
+     * @return _creator Campaign creator address
+     * @return _fundingGoal Target amount to raise (in wei)
+     * @return _totalRaised Total amount raised so far (in wei)
+     * @return _deadline Timestamp when the campaign ends
+     * @return _aiVerified True if AI verification passed
+     * @return _communityApproved True if community approval threshold met
+     * @return _fraudDetected True if fraud has been detected
+     * @return _withdrawn True if funds have been withdrawn by the creator
+     * @return _yesVotes Number of 'yes' votes from contributors
+     * @return _noVotes Number of 'no' votes from contributors
+     * @return _contributorCount Total number of unique contributors
      */
     function getCampaignStatus() external view returns (
         address _creator,

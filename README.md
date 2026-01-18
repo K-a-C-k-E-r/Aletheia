@@ -1,7 +1,30 @@
-# 🌌 Aletheia
+<p align="center">
+  <img src="./public/banner.png" alt="Aletheia Banner" width="100%" />
+</p>
 
+<p align="center">
+  <img src="./public/logo.png" alt="Aletheia Logo" width="150" />
+</p>
 
-**Truth-Verified Crowdfunding & Lending on the Bittensor Network**
+<h1 align="center">🌌 Aletheia</h1>
+
+<p align="center">
+  <b>Truth-Verified Crowdfunding & Lending on the Bittensor Network</b>
+</p>
+
+<p align="center">
+  <a href="https://aletheia-eight.vercel.app/">🌐 Live Demo</a> •
+  <a href="https://github.com/K-a-C-k-E-r/Aletheia">📦 GitHub</a> •
+  <a href="#-getting-testnet-tokens">🚰 Faucet</a> •
+  <a href="#-local-development">🛠️ Setup</a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Bittensor-EVM%20Testnet-cyan?style=for-the-badge&logo=blockchain" alt="Bittensor" />
+  <img src="https://img.shields.io/badge/AI-Gemini%20Powered-blue?style=for-the-badge&logo=google" alt="Gemini AI" />
+  <img src="https://img.shields.io/badge/Smart%20Contracts-Solidity-purple?style=for-the-badge&logo=ethereum" alt="Solidity" />
+  <img src="https://img.shields.io/badge/Frontend-Next.js%2016-black?style=for-the-badge&logo=nextdotjs" alt="Next.js" />
+</p>
 
 <p align="center">
   <b>Aletheia — Truth Revealed.</b><br/>
@@ -201,8 +224,8 @@ Add to MetaMask:
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/aletheia.git
-cd aletheia
+git clone https://github.com/K-a-C-k-E-r/Aletheia.git
+cd Aletheia
 
 # Install dependencies
 npm install
@@ -276,7 +299,7 @@ The name "Aletheia" (ἀλήθεια) comes from ancient Greek, meaning **"truth
 
 ## 📬 Contact & Community
 
-- **GitHub**: https://github.com/your-username/aletheia
+- **GitHub**: https://github.com/K-a-C-k-E-r/Aletheia
 - **Docs**: https://docs.aletheia.xyz
 - **Network**: [Bittensor](https://bittensor.com)
 - **Discord**: Join the Bittensor community
@@ -289,9 +312,9 @@ The name "Aletheia" (ἀλήθεια) comes from ancient Greek, meaning **"truth
 - [x] Wallet integration (MetaMask)
 - [x] Trust score system architecture
 - [x] Bittensor Network integration
-- [ ] Smart contract deployment
-- [ ] Gemini AI integration
-- [ ] IPFS document storage
+- [x] Smart contract deployment
+- [x] Gemini AI integration
+- [x] IPFS document storage
 - [ ] Mainnet launch
 - [ ] Mobile app (React Native)
 - [ ] Advanced analytics dashboard
