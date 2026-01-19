@@ -11,7 +11,7 @@ const __dirname = path.dirname(__filename);
 
 async function main() {
     console.log("🚀 Deploying contracts to network...");
-    
+
     // Check if private key is configured
     if (!process.env.PRIVATE_KEY || process.env.PRIVATE_KEY === '') {
         console.error("❌ ERROR: PRIVATE_KEY not found in .env file");
@@ -25,7 +25,7 @@ async function main() {
         console.error("❌ ERROR: No signers available. Check your network configuration.");
         process.exit(1);
     }
-    
+
     const [deployer] = signers;
     console.log("📝 Deploying with account:", deployer.address);
 
