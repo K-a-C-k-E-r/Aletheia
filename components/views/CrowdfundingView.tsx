@@ -51,6 +51,13 @@ export default function CrowdfundingView() {
 
             // Get all campaign addresses
             const campaignAddresses = await factory.getAllCampaigns();
+            
+            // If no campaigns exist yet, return empty array
+            if (!campaignAddresses || campaignAddresses.length === 0) {
+                setCampaigns([]);
+                setLoading(false);
+                return;
+            }
 
             // Fetch details for each campaign
             const campaignPromises = campaignAddresses.map(async (campaignAddr: string) => {
@@ -118,7 +125,16 @@ export default function CrowdfundingView() {
             setCampaigns(validCampaigns);
         } catch (err) {
             console.error('Failed to fetch campaigns:', err);
-            setError('Failed to load campaigns. Please make sure contracts are deployed.');
+            const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+            
+            // Check if it's a "no campaigns" scenario vs actual error
+            if (errorMessage.includes('could not decode result data') || errorMessage.includes('BAD_DATA')) {
+                // This likely means no campaigns exist yet
+                setCampaigns([]);
+                setError(null);
+            } else {
+                setError('Failed to load campaigns. Please check your wallet connection and network.');
+            }
         } finally {
             setLoading(false);
         }
