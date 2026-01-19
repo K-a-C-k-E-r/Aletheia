@@ -51,7 +51,7 @@ export default function CrowdfundingView() {
 
             // Get all campaign addresses
             const campaignAddresses = await factory.getAllCampaigns();
-            
+
             // If no campaigns exist yet, return empty array
             if (!campaignAddresses || campaignAddresses.length === 0) {
                 setCampaigns([]);
@@ -126,7 +126,7 @@ export default function CrowdfundingView() {
         } catch (err) {
             console.error('Failed to fetch campaigns:', err);
             const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-            
+
             // Check if it's a "no campaigns" scenario vs actual error
             if (errorMessage.includes('could not decode result data') || errorMessage.includes('BAD_DATA')) {
                 // This likely means no campaigns exist yet
