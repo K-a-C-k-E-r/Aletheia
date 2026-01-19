@@ -1,0 +1,9 @@
+{
+  "network": "localhost",
+  "chainId": 1337,
+  "factoryAddress": "",
+  "lendingPoolAddress": "",
+  "trustScoreAddress": "",
+  "aiVerifier": "",
+  "deployedAt": ""
+}

@@ -1,5 +1,8 @@
+require('dotenv').config();
+require("@nomicfoundation/hardhat-toolbox");
+
 /** @type import('hardhat/config').HardhatUserConfig */
-const config = {
+module.exports = {
     solidity: {
         version: "0.8.24",
         settings: {
@@ -20,12 +23,16 @@ const config = {
         hardhat: {
             chainId: 1337,
         },
-        bittensorTestnet: {
+        sepolia: {
+            url: "https://ethereum-sepolia-rpc.publicnode.com",
+            chainId: 11155111,
+            accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+            timeout: 60000
+        },
+        bittensor_testnet: {
             url: "https://test.chain.opentensor.ai",
-            chainId: 945,
+            chainId: 10324,
             accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : []
         }
     },
 };
-
-export default config;

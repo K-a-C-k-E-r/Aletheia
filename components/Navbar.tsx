@@ -2,23 +2,29 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { Menu, X, ChevronDown } from 'lucide-react';
 import { useWalletStore } from '@/store/walletStore';
+import { useTrustScoreStore } from '@/store/trustScoreStore';
 
 interface NavbarProps {
     mode?: 'landing' | 'app';
+    activeTab?: 'borrow' | 'crowdfunding';
+    onTabChange?: (tab: 'borrow' | 'crowdfunding') => void;
 }
 
-export default function Navbar({ mode = 'landing' }: NavbarProps) {
+export default function Navbar({ mode = 'landing', activeTab, onTabChange }: NavbarProps) {
     const pathname = usePathname();
+    const router = useRouter();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [productMenuOpen, setProductMenuOpen] = useState(false);
     const { address, isConnected, balance, connect, disconnect } = useWalletStore();
+    const { score, level } = useTrustScoreStore();
 
     // Determine mode based on pathname if not explicitly set
     const isLandingMode = mode === 'landing' || pathname === '/';
+    const isAppMode = !isLandingMode;
 
     const scrollToSection = (id: string) => {
         const element = document.getElementById(id);
@@ -32,6 +38,28 @@ export default function Navbar({ mode = 'landing' }: NavbarProps) {
         return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
     };
 
+    const getTrustColor = () => {
+        switch (level) {
+            case 'high':
+                return '#22c55e'; // green
+            case 'medium':
+                return '#eab308'; // yellow
+            case 'low':
+                return '#ef4444'; // red
+            default:
+                return '#808080'; // gray
+        }
+    };
+
+    const handleTabClick = (tab: 'borrow' | 'crowdfunding') => {
+        if (onTabChange) {
+            onTabChange(tab);
+        } else {
+            // Navigate to the appropriate page
+            router.push(tab === 'borrow' ? '/borrow' : '/app');
+        }
+    };
+
     return (
         <nav
             className="fixed top-0 left-0 right-0 z-50 glass border-b border-white/10"
@@ -42,10 +70,25 @@ export default function Navbar({ mode = 'landing' }: NavbarProps) {
         >
             <div className="container mx-auto px-4">
                 <div className="flex items-center justify-between h-16">
-                    {/* Logo */}
-                    <Link href="/" className="text-2xl font-bold gradient-text flex items-center gap-2">
-                        Aletheia
-                    </Link>
+                    {/* Logo + Trust Indicator (if in app mode) */}
+                    <div className="flex items-center gap-4">
+                        <Link href="/" className="flex flex-col">
+                            <span className="text-2xl font-bold gradient-text">Aletheia</span>
+                            {isAppMode && (
+                                <span className="text-xs text-[hsl(var(--text-muted))]">Truth on-chain</span>
+                            )}
+                        </Link>
+                        {isAppMode && isConnected && (
+                            <div
+                                className="w-2 h-2 rounded-full animate-pulse"
+                                style={{
+                                    backgroundColor: getTrustColor(),
+                                    boxShadow: `0 0 8px ${getTrustColor()}`,
+                                }}
+                                title={`Trust Level: ${level}`}
+                            />
+                        )}
+                    </div>
 
                     {/* Desktop Navigation */}
                     <div className="hidden md:flex items-center gap-8">
@@ -92,50 +135,53 @@ export default function Navbar({ mode = 'landing' }: NavbarProps) {
                             </>
                         ) : (
                             <>
-                                {/* App Mode Navigation - Product Switcher */}
-                                <div className="relative">
-                                    <button
-                                        onClick={() => setProductMenuOpen(!productMenuOpen)}
-                                        className="flex items-center gap-2 text-[hsl(var(--text-secondary))] hover:text-white transition-colors"
-                                    >
-                                        <span className="font-semibold">
-                                            {pathname.startsWith('/borrow') ? 'Borrowing' : 'Crowdfunding'}
-                                        </span>
-                                        <ChevronDown className={`w-4 h-4 transition-transform ${productMenuOpen ? 'rotate-180' : ''}`} />
-                                    </button>
+                                {/* App Mode Navigation - Inline Tabs */}
+                                {isConnected && activeTab && (
+                                    <div className="flex items-center gap-1 glass rounded-lg p-1">
+                                        <button
+                                            onClick={() => handleTabClick('borrow')}
+                                            className="relative px-6 py-2 rounded-md font-semibold transition-all duration-300"
+                                            style={{
+                                                color: activeTab === 'borrow' ? '#fff' : '#b3b3b3',
+                                            }}
+                                        >
+                                            Aletheia Lending
+                                            {activeTab === 'borrow' && (
+                                                <motion.div
+                                                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--secondary))]"
+                                                    layoutId="activeTab"
+                                                    style={{ borderRadius: '2px' }}
+                                                />
+                                            )}
+                                        </button>
+                                        <button
+                                            onClick={() => handleTabClick('crowdfunding')}
+                                            className="relative px-6 py-2 rounded-md font-semibold transition-all duration-300"
+                                            style={{
+                                                color: activeTab === 'crowdfunding' ? '#fff' : '#b3b3b3',
+                                            }}
+                                        >
+                                            Aletheia Raise
+                                            {activeTab === 'crowdfunding' && (
+                                                <motion.div
+                                                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--secondary))]"
+                                                    layoutId="activeTab"
+                                                    style={{ borderRadius: '2px' }}
+                                                />
+                                            )}
+                                        </button>
+                                    </div>
+                                )}
 
-                                    <AnimatePresence>
-                                        {productMenuOpen && (
-                                            <motion.div
-                                                initial={{ opacity: 0, y: -10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                exit={{ opacity: 0, y: -10 }}
-                                                className="absolute top-full mt-2 left-0 glass rounded-lg overflow-hidden min-w-[200px]"
-                                            >
-                                                <Link
-                                                    href="/app"
-                                                    onClick={() => setProductMenuOpen(false)}
-                                                    className="block px-4 py-3 hover:bg-white/10 transition-colors"
-                                                >
-                                                    <div className="font-semibold">Crowdfunding</div>
-                                                    <div className="text-sm text-[hsl(var(--text-secondary))]">
-                                                        AI & Community Verified
-                                                    </div>
-                                                </Link>
-                                                <Link
-                                                    href="/borrow"
-                                                    onClick={() => setProductMenuOpen(false)}
-                                                    className="block px-4 py-3 hover:bg-white/10 transition-colors border-t border-white/10"
-                                                >
-                                                    <div className="font-semibold">Borrowing</div>
-                                                    <div className="text-sm text-[hsl(var(--text-secondary))]">
-                                                        Trust-Based Lending
-                                                    </div>
-                                                </Link>
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
-                                </div>
+                                {/* Trust Score Badge (only in app mode when connected) */}
+                                {isConnected && (
+                                    <div className="glass px-3 py-1.5 rounded-lg flex items-center gap-2">
+                                        <span className="text-xs text-[hsl(var(--text-muted))]">Trust</span>
+                                        <span className="font-bold text-sm" style={{ color: getTrustColor() }}>
+                                            {score}
+                                        </span>
+                                    </div>
+                                )}
                             </>
                         )}
 
@@ -183,98 +229,100 @@ export default function Navbar({ mode = 'landing' }: NavbarProps) {
                     >
                         {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                     </button>
-                </div>
+                </div >
 
                 {/* Mobile Menu */}
                 <AnimatePresence>
-                    {mobileMenuOpen && (
-                        <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            exit={{ opacity: 0, height: 0 }}
-                            className="md:hidden border-t border-white/10 py-4"
-                        >
-                            {isLandingMode ? (
-                                <div className="flex flex-col gap-4">
-                                    <button
-                                        onClick={() => scrollToSection('about')}
-                                        className="text-left text-[hsl(var(--text-secondary))] hover:text-white transition-colors"
-                                    >
-                                        About
-                                    </button>
-                                    <button
-                                        onClick={() => scrollToSection('features')}
-                                        className="text-left text-[hsl(var(--text-secondary))] hover:text-white transition-colors"
-                                    >
-                                        Features
-                                    </button>
-                                    <button
-                                        onClick={() => scrollToSection('faucet')}
-                                        className="text-left text-[hsl(var(--text-secondary))] hover:text-white transition-colors"
-                                    >
-                                        Faucet
-                                    </button>
-                                    <button
-                                        onClick={() => scrollToSection('docs')}
-                                        className="text-left text-[hsl(var(--text-secondary))] hover:text-white transition-colors"
-                                    >
-                                        Docs
-                                    </button>
-                                    <Link href="/app" onClick={() => setMobileMenuOpen(false)}>
-                                        <button className="gradient-button w-full">Launch App</button>
-                                    </Link>
-                                </div>
-                            ) : (
-                                <div className="flex flex-col gap-4">
-                                    <Link href="/app" onClick={() => setMobileMenuOpen(false)}>
-                                        <div className="glass glass-hover p-3 rounded-lg">
-                                            <div className="font-semibold">Crowdfunding</div>
-                                            <div className="text-sm text-[hsl(var(--text-secondary))]">
-                                                AI & Community Verified
-                                            </div>
-                                        </div>
-                                    </Link>
-                                    <Link href="/borrow" onClick={() => setMobileMenuOpen(false)}>
-                                        <div className="glass glass-hover p-3 rounded-lg">
-                                            <div className="font-semibold">Borrowing</div>
-                                            <div className="text-sm text-[hsl(var(--text-secondary))]">
-                                                Trust-Based Lending
-                                            </div>
-                                        </div>
-                                    </Link>
-                                </div>
-                            )}
-
-                            {/* Mobile Wallet Button */}
-                            <div className="mt-4 pt-4 border-t border-white/10">
-                                {isConnected ? (
-                                    <div className="flex flex-col gap-2">
-                                        <div className="glass p-3 rounded-lg">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <div className="w-2 h-2 bg-green-400 rounded-full" />
-                                                <span className="font-mono text-sm">{formatAddress(address!)}</span>
-                                            </div>
-                                            <div className="text-sm text-[hsl(var(--text-secondary))]">
-                                                {balance} ETH
-                                            </div>
-                                        </div>
+                    {
+                        mobileMenuOpen && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="md:hidden border-t border-white/10 py-4"
+                            >
+                                {isLandingMode ? (
+                                    <div className="flex flex-col gap-4">
                                         <button
-                                            onClick={disconnect}
-                                            className="glass glass-hover px-4 py-2 rounded-lg text-red-400"
+                                            onClick={() => scrollToSection('about')}
+                                            className="text-left text-[hsl(var(--text-secondary))] hover:text-white transition-colors"
                                         >
-                                            Disconnect
+                                            About
                                         </button>
+                                        <button
+                                            onClick={() => scrollToSection('features')}
+                                            className="text-left text-[hsl(var(--text-secondary))] hover:text-white transition-colors"
+                                        >
+                                            Features
+                                        </button>
+                                        <button
+                                            onClick={() => scrollToSection('faucet')}
+                                            className="text-left text-[hsl(var(--text-secondary))] hover:text-white transition-colors"
+                                        >
+                                            Faucet
+                                        </button>
+                                        <button
+                                            onClick={() => scrollToSection('docs')}
+                                            className="text-left text-[hsl(var(--text-secondary))] hover:text-white transition-colors"
+                                        >
+                                            Docs
+                                        </button>
+                                        <Link href="/app" onClick={() => setMobileMenuOpen(false)}>
+                                            <button className="gradient-button w-full">Launch App</button>
+                                        </Link>
                                     </div>
                                 ) : (
-                                    <button onClick={connect} className="gradient-button w-full">
-                                        Connect Wallet
-                                    </button>
+                                    <div className="flex flex-col gap-4">
+                                        <Link href="/app" onClick={() => setMobileMenuOpen(false)}>
+                                            <div className="glass glass-hover p-3 rounded-lg">
+                                                <div className="font-semibold">Crowdfunding</div>
+                                                <div className="text-sm text-[hsl(var(--text-secondary))]">
+                                                    AI & Community Verified
+                                                </div>
+                                            </div>
+                                        </Link>
+                                        <Link href="/borrow" onClick={() => setMobileMenuOpen(false)}>
+                                            <div className="glass glass-hover p-3 rounded-lg">
+                                                <div className="font-semibold">Borrowing</div>
+                                                <div className="text-sm text-[hsl(var(--text-secondary))]">
+                                                    Trust-Based Lending
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    </div>
                                 )}
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </div>
-        </nav>
+
+                                {/* Mobile Wallet Button */}
+                                <div className="mt-4 pt-4 border-t border-white/10">
+                                    {isConnected ? (
+                                        <div className="flex flex-col gap-2">
+                                            <div className="glass p-3 rounded-lg">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <div className="w-2 h-2 bg-green-400 rounded-full" />
+                                                    <span className="font-mono text-sm">{formatAddress(address!)}</span>
+                                                </div>
+                                                <div className="text-sm text-[hsl(var(--text-secondary))]">
+                                                    {balance} ETH
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={disconnect}
+                                                className="glass glass-hover px-4 py-2 rounded-lg text-red-400"
+                                            >
+                                                Disconnect
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button onClick={connect} className="gradient-button w-full">
+                                            Connect Wallet
+                                        </button>
+                                    )}
+                                </div>
+                            </motion.div>
+                        )
+                    }
+                </AnimatePresence >
+            </div >
+        </nav >
     );
 }

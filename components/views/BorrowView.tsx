@@ -1,11 +1,12 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { TrendingUp, Clock, AlertCircle } from 'lucide-react';
 import TrustScoreRing from '@/components/TrustScoreRing';
 import { useWalletStore } from '@/store/walletStore';
 import { useTrustScoreStore } from '@/store/trustScoreStore';
+import { getLendingPoolContract, parseEther, formatEther, loadDeploymentAddresses } from '@/lib/contracts';
 
 export default function BorrowView() {
     const { address, balance } = useWalletStore();
@@ -15,10 +16,31 @@ export default function BorrowView() {
     const [loanAmount, setLoanAmount] = useState('');
     const [duration, setDuration] = useState(30);
     const [loading, setLoading] = useState(false);
+    const [poolBalance, setPoolBalance] = useState('0');
 
     const interestRate = getInterestRate();
     const maxLTV = 0.75;
     const maxLoan = collateralAmount ? (parseFloat(collateralAmount) * maxLTV).toFixed(4) : '0';
+
+    // Fetch pool balance
+    useEffect(() => {
+        const fetchPoolBalance = async () => {
+            try {
+                await loadDeploymentAddresses();
+                const lendingPool = await getLendingPoolContract();
+                if (lendingPool) {
+                    const balance = await lendingPool.totalPoolBalance();
+                    setPoolBalance(formatEther(balance));
+                }
+            } catch (error) {
+                console.error('Failed to fetch pool balance:', error);
+            }
+        };
+
+        if (address) {
+            fetchPoolBalance();
+        }
+    }, [address]);
 
     const calculateRepayment = () => {
         if (!loanAmount) return { principal: 0, interest: 0, total: 0 };
@@ -44,9 +66,39 @@ export default function BorrowView() {
         }
 
         setLoading(true);
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        alert('Loan created successfully! (Mock transaction)');
-        setLoading(false);
+
+        try {
+            await loadDeploymentAddresses();
+            const lendingPool = await getLendingPoolContract();
+
+            if (!lendingPool) {
+                throw new Error('Failed to connect to lending pool contract');
+            }
+
+            // Calculate duration in seconds (days * 24 * 60 * 60)
+            const durationInSeconds = duration * 24 * 60 * 60;
+
+            // Create loan - send collateral as value, pass loan amount and duration
+            const tx = await lendingPool.createLoan(
+                parseEther(loanAmount),
+                durationInSeconds,
+                { value: parseEther(collateralAmount) }
+            );
+
+            console.log('Transaction submitted:', tx.hash);
+            await tx.wait();
+
+            alert(`Loan created successfully! TX: ${tx.hash}`);
+
+            // Reset form
+            setCollateralAmount('');
+            setLoanAmount('');
+        } catch (error: any) {
+            console.error('Failed to create loan:', error);
+            alert(`Failed to create loan: ${error.message || 'Unknown error'}`);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (

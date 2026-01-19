@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import InlineNavbar from '@/components/InlineNavbar';
+import Navbar from '@/components/Navbar';
 import StarfieldBackground from '@/components/StarfieldBackground';
 import TorchCursor from '@/components/TorchCursor';
 import { useWalletStore } from '@/store/walletStore';
@@ -17,7 +17,7 @@ export default function UnifiedAppPage() {
     const router = useRouter();
     const { isConnected, address } = useWalletStore();
     const { calculateScore } = useTrustScoreStore();
-    const [activeTab, setActiveTab] = useState<'borrow' | 'crowdfunding'>('borrow');
+    const [activeTab, setActiveTab] = useState<'borrow' | 'crowdfunding'>('crowdfunding');
 
     // Calculate trust score when wallet connects
     useEffect(() => {
@@ -51,8 +51,8 @@ export default function UnifiedAppPage() {
             {/* Torch Cursor */}
             <TorchCursor />
 
-            {/* Inline Navbar */}
-            <InlineNavbar activeTab={activeTab} onTabChange={setActiveTab} />
+            {/* Unified Navbar */}
+            <Navbar mode="app" activeTab={activeTab} onTabChange={setActiveTab} />
 
             {/* Main Content - Add padding-top for fixed navbar */}
             <div className="relative pt-16" style={{ zIndex: 1 }}>

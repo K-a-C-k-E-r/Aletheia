@@ -3,37 +3,185 @@
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { ArrowLeft, ThumbsUp, ThumbsDown, Heart, Shield, Users, AlertTriangle } from 'lucide-react';
-import { useState } from 'react';
-import InlineNavbar from '@/components/InlineNavbar';
+import { useState, useEffect } from 'react';
+import Navbar from '@/components/Navbar';
+import { useWalletStore } from '@/store/walletStore';
+import { getCampaignContract, formatEther, parseEther, loadDeploymentAddresses } from '@/lib/contracts';
+import { fetchFromIPFS } from '@/lib/ipfs';
 
 export default function CampaignDetailPage({ params }: { params: { id: string } }) {
+    const { address, isConnected } = useWalletStore();
     const [donationAmount, setDonationAmount] = useState('');
-    const [hasVoted, setHasVoted] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [campaignData, setCampaignData] = useState<any>(null);
+    const [voting, setVoting] = useState(false);
+    const [contributing, setContributing] = useState(false);
 
-    // Mock campaign data
-    const campaign = {
-        id: params.id,
-        title: 'Medical Aid for Children',
-        description: 'Help provide medical care for underprivileged children in rural areas. This campaign aims to build a small clinic and provide essential medical supplies.',
-        creator: '0x1234567890abcdef',
-        goal: 10,
-        raised: 7.5,
-        backers: 42,
-        daysLeft: 15,
-        trustScore: 85,
-        aiVerified: true,
-        communityApproved: true,
-        yesVotes: 35,
-        noVotes: 7,
-        fraudDetected: false,
+    useEffect(() => {
+        fetchCampaignData();
+    }, [params.id]);
+
+    const fetchCampaignData = async () => {
+        setLoading(true);
+        try {
+            await loadDeploymentAddresses();
+            const campaign = await getCampaignContract(params.id);
+
+            if (!campaign) {
+                throw new Error('Campaign not found');
+            }
+
+            const [
+                creator,
+                fundingGoal,
+                totalRaised,
+                deadline,
+                aiVerified,
+                communityApproved,
+                fraudDetected,
+                withdrawn,
+                yesVotes,
+                noVotes,
+                contributorCount
+            ] = await campaign.getCampaignStatus();
+
+            const ipfsHash = await campaign.ipfsHash();
+            const trustScore = await campaign.getTrustScore();
+            const userContribution = isConnected && address ? await campaign.contributions(address) : 0n;
+            const hasVoted = isConnected && address ? await campaign.hasVoted(address) : false;
+
+            // Fetch metadata from IPFS
+            let title = 'Campaign';
+            let description = 'No description available';
+
+            if (ipfsHash) {
+                try {
+                    const metadata = await fetchFromIPFS(ipfsHash);
+                    if (metadata) {
+                        title = metadata.title || title;
+                        description = metadata.description || description;
+                    }
+                } catch (e) {
+                    console.log('Failed to fetch IPFS metadata');
+                }
+            }
+
+            const now = Math.floor(Date.now() / 1000);
+            const daysLeft = Math.max(0, Math.floor((Number(deadline) - now) / (24 * 60 * 60)));
+
+            setCampaignData({
+                address: params.id,
+                title,
+                description,
+                creator,
+                goal: formatEther(fundingGoal),
+                raised: formatEther(totalRaised),
+                backers: Number(contributorCount),
+                daysLeft,
+                trustScore: Number(trustScore),
+                aiVerified,
+                communityApproved,
+                yesVotes: Number(yesVotes),
+                noVotes: Number(noVotes),
+                fraudDetected,
+                withdrawn,
+                userContribution: formatEther(userContribution),
+                hasVoted,
+                ipfsHash
+            });
+        } catch (error) {
+            console.error('Failed to fetch campaign:', error);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const progress = (campaign.raised / campaign.goal) * 100;
+    const handleContribute = async () => {
+        if (!donationAmount || !isConnected) {
+            alert('Please connect wallet and enter amount');
+            return;
+        }
+
+        setContributing(true);
+        try {
+            const campaign = await getCampaignContract(params.id);
+            if (!campaign) throw new Error('Campaign not found');
+
+            const tx = await campaign.contribute({ value: parseEther(donationAmount) });
+            await tx.wait();
+
+            alert('Contribution successful!');
+            setDonationAmount('');
+            fetchCampaignData();
+        } catch (error: any) {
+            console.error('Contribution failed:', error);
+            alert(`Contribution failed: ${error.message || 'Unknown error'}`);
+        } finally {
+            setContributing(false);
+        }
+    };
+
+    const handleVote = async (approve: boolean) => {
+        if (!isConnected) {
+            alert('Please connect your wallet');
+            return;
+        }
+
+        setVoting(true);
+        try {
+            const campaign = await getCampaignContract(params.id);
+            if (!campaign) throw new Error('Campaign not found');
+
+            const tx = await campaign.vote(approve);
+            await tx.wait();
+
+            alert(`Vote ${approve ? 'approved' : 'rejected'} successfully!`);
+            fetchCampaignData();
+        } catch (error: any) {
+            console.error('Vote failed:', error);
+            alert(`Vote failed: ${error.message || 'Unknown error'}`);
+        } finally {
+            setVoting(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen" style={{ background: '#000' }}>
+                <Navbar mode="app" activeTab="crowdfunding" />
+                <div className="flex items-center justify-center h-[80vh]">
+                    <div className="text-center">
+                        <div className="w-16 h-16 border-4 border-[hsl(var(--primary))] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                        <p className="text-[hsl(var(--text-secondary))]">Loading campaign...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (!campaignData) {
+        return (
+            <div className="min-h-screen" style={{ background: '#000' }}>
+                <Navbar mode="app" activeTab="crowdfunding" />
+                <div className="flex items-center justify-center h-[80vh]">
+                    <div className="text-center">
+                        <p className="text-xl">Campaign not found</p>
+                        <Link href="/app" className="gradient-button inline-block mt-4">
+                            Back to Campaigns
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    const campaign = campaignData;
+    const progress = (parseFloat(campaign.raised) / parseFloat(campaign.goal)) * 100;
 
     return (
         <div className="min-h-screen" style={{ background: '#000' }}>
             {/* Navbar */}
-            <InlineNavbar activeTab="crowdfunding" />
+            <Navbar mode="app" activeTab="crowdfunding" />
 
             {/* Main Content */}
             <main className="container mx-auto px-4 py-12">
@@ -164,21 +312,23 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
                                 </div>
                             </div>
 
-                            {!hasVoted ? (
+                            {!campaign.hasVoted ? (
                                 <div className="flex gap-4">
                                     <button
-                                        onClick={() => setHasVoted(true)}
-                                        className="flex-1 bg-green-500/20 hover:bg-green-500/30 text-green-400 font-semibold px-6 py-3 rounded-lg transition-all flex items-center justify-center gap-2"
+                                        onClick={() => handleVote(true)}
+                                        disabled={voting}
+                                        className="flex-1 bg-green-500/20 hover:bg-green-500/30 text-green-400 font-semibold px-6 py-3 rounded-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                                     >
                                         <ThumbsUp className="w-5 h-5" />
-                                        Vote Yes
+                                        {voting ? 'Voting...' : 'Vote Yes'}
                                     </button>
                                     <button
-                                        onClick={() => setHasVoted(true)}
-                                        className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 font-semibold px-6 py-3 rounded-lg transition-all flex items-center justify-center gap-2"
+                                        onClick={() => handleVote(false)}
+                                        disabled={voting}
+                                        className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 font-semibold px-6 py-3 rounded-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                                     >
                                         <ThumbsDown className="w-5 h-5" />
-                                        Vote No
+                                        {voting ? 'Voting...' : 'Vote No'}
                                     </button>
                                 </div>
                             ) : (
@@ -268,13 +418,31 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
                                         ))}
                                     </div>
 
-                                    <button className="gradient-button w-full mb-4 flex items-center justify-center gap-2">
+                                    <button
+                                        onClick={handleContribute}
+                                        disabled={contributing || !donationAmount}
+                                        className="gradient-button w-full mb-4 flex items-center justify-center gap-2 disabled:opacity-50"
+                                    >
                                         <Heart className="w-5 h-5" />
-                                        Donate Now
+                                        {contributing ? 'Processing...' : 'Donate Now'}
                                     </button>
                                 </>
                             ) : (
-                                <button className="bg-red-500/20 text-red-400 w-full px-6 py-4 rounded-lg font-semibold">
+                                <button
+                                    onClick={async () => {
+                                        try {
+                                            const campaign = await getCampaignContract(params.id);
+                                            if (!campaign) throw new Error('Campaign not found');
+                                            const tx = await campaign.refund();
+                                            await tx.wait();
+                                            alert('Refund claimed successfully!');
+                                            fetchCampaignData();
+                                        } catch (error: any) {
+                                            alert(`Refund failed: ${error.message || 'Unknown error'}`);
+                                        }
+                                    }}
+                                    className="bg-red-500/20 text-red-400 w-full px-6 py-4 rounded-lg font-semibold hover:bg-red-500/30"
+                                >
                                     Claim Refund
                                 </button>
                             )}
