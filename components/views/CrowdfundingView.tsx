@@ -42,11 +42,15 @@ export default function CrowdfundingView() {
 
         try {
             // Load deployment addresses first
-            await loadDeploymentAddresses();
+            const deployments = await loadDeploymentAddresses();
+
+            if (!deployments) {
+                throw new Error('Could not load contract addresses. Please ensure contracts are deployed.');
+            }
 
             const factory = await getCampaignFactoryContract();
             if (!factory) {
-                throw new Error('Failed to connect to factory contract');
+                throw new Error('Failed to connect to factory contract. Make sure you are on the Sepolia network.');
             }
 
             // Get all campaign addresses

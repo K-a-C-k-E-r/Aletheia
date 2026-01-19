@@ -13,10 +13,22 @@ let TRUST_SCORE_ADDRESS = '';
 export const loadDeploymentAddresses = async () => {
     try {
         const response = await fetch('/contracts/deployments.json');
+        if (!response.ok) {
+            throw new Error('Deployments file not found');
+        }
         const deployments = await response.json();
         CAMPAIGN_FACTORY_ADDRESS = deployments.factoryAddress || '';
         LENDING_POOL_ADDRESS = deployments.lendingPoolAddress || '';
         TRUST_SCORE_ADDRESS = deployments.trustScoreAddress || '';
+        
+        console.log('Loaded contract addresses:', {
+            factory: CAMPAIGN_FACTORY_ADDRESS,
+            lendingPool: LENDING_POOL_ADDRESS,
+            trustScore: TRUST_SCORE_ADDRESS,
+            network: deployments.network,
+            chainId: deployments.chainId
+        });
+        
         return deployments;
     } catch (error) {
         console.error('Failed to load deployment addresses:', error);
@@ -41,7 +53,20 @@ export const getSigner = async () => {
 // Contract instances
 export const getCampaignFactoryContract = async () => {
     const signer = await getSigner();
-    if (!signer || !CAMPAIGN_FACTORY_ADDRESS) return null;
+    if (!signer) {
+        console.error('No signer available - wallet not connected');
+        return null;
+    }
+    if (!CAMPAIGN_FACTORY_ADDRESS) {
+        console.error('Campaign Factory address not loaded');
+        return null;
+    }
+    
+    // Verify we're on the correct network
+    const provider = await signer.provider;
+    const network = await provider?.getNetwork();
+    console.log('Current network:', network?.chainId);
+    
     return new ethers.Contract(CAMPAIGN_FACTORY_ADDRESS, CampaignFactoryABI, signer);
 };
 

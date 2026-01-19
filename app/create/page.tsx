@@ -24,6 +24,39 @@ export default function CreateCampaignPage() {
     const [duration, setDuration] = useState('30'); // days
     const [documents, setDocuments] = useState<File[]>([]);
 
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files) return;
+
+        const newFiles = Array.from(files);
+        const validFiles = newFiles.filter(file => {
+            // Check file size (10MB max)
+            if (file.size > 10 * 1024 * 1024) {
+                alert(`${file.name} is too large. Max size is 10MB.`);
+                return false;
+            }
+            // Check file type
+            const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+            if (!validTypes.includes(file.type)) {
+                alert(`${file.name} is not a supported format. Use PDF, JPG, or PNG.`);
+                return false;
+            }
+            return true;
+        });
+
+        setDocuments(prev => [...prev, ...validFiles]);
+    };
+
+    const removeDocument = (index: number) => {
+        setDocuments(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const formatFileSize = (bytes: number) => {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    };
+
     const handleVerifyCampaign = async () => {
         if (!title || !description || !fundingGoal || !duration) {
             alert('Please fill all required fields before verification');
@@ -178,47 +211,67 @@ export default function CreateCampaignPage() {
                             <h2 className="text-2xl font-bold mb-6">Basic Information</h2>
 
                             <div>
-                                <label className="block text-sm font-semibold mb-2">Campaign Title</label>
+                                <label className="block text-sm font-semibold mb-2">
+                                    Campaign Title <span className="text-red-400">*</span>
+                                </label>
                                 <input
                                     type="text"
                                     placeholder="Medical Aid for Children"
                                     value={title}
                                     onChange={(e) => setTitle(e.target.value)}
+                                    required
                                     className="glass w-full px-4 py-3 rounded-lg text-white placeholder:text-[hsl(var(--text-secondary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
                                 />
+                                {!title && <p className="text-xs text-red-400 mt-1">This field is required</p>}
                             </div>
 
                             <div>
-                                <label className="block text-sm font-semibold mb-2">Description</label>
+                                <label className="block text-sm font-semibold mb-2">
+                                    Description <span className="text-red-400">*</span>
+                                </label>
                                 <textarea
                                     rows={4}
                                     placeholder="Tell your story..."
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
+                                    required
                                     className="glass w-full px-4 py-3 rounded-lg text-white placeholder:text-[hsl(var(--text-secondary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
                                 />
+                                {!description && <p className="text-xs text-red-400 mt-1">This field is required</p>}
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-semibold mb-2">Funding Goal (ETH)</label>
+                                    <label className="block text-sm font-semibold mb-2">
+                                        Funding Goal (ETH) <span className="text-red-400">*</span>
+                                    </label>
                                     <input
                                         type="number"
                                         placeholder="10"
+                                        min="0.01"
+                                        step="0.01"
                                         value={fundingGoal}
                                         onChange={(e) => setFundingGoal(e.target.value)}
+                                        required
                                         className="glass w-full px-4 py-3 rounded-lg text-white placeholder:text-[hsl(var(--text-secondary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
                                     />
+                                    {!fundingGoal && <p className="text-xs text-red-400 mt-1">Required</p>}
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-semibold mb-2">Duration (days)</label>
+                                    <label className="block text-sm font-semibold mb-2">
+                                        Duration (days) <span className="text-red-400">*</span>
+                                    </label>
                                     <input
                                         type="number"
                                         placeholder="30"
+                                        min="1"
+                                        max="365"
                                         value={duration}
                                         onChange={(e) => setDuration(e.target.value)}
+                                        required
                                         className="glass w-full px-4 py-3 rounded-lg text-white placeholder:text-[hsl(var(--text-secondary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
                                     />
+                                    {!duration && <p className="text-xs text-red-400 mt-1">Required</p>}
                                 </div>
                             </div>
                         </div>
@@ -228,28 +281,57 @@ export default function CreateCampaignPage() {
                         <div className="space-y-6">
                             <h2 className="text-2xl font-bold mb-6">Upload Documents</h2>
                             <p className="text-[hsl(var(--text-secondary))] mb-6">
-                                Upload your ID and proof documents for AI verification
+                                Upload your ID and proof documents for AI verification (Optional but recommended)
                             </p>
 
-                            <div className="border-2 border-dashed border-white/20 rounded-lg p-12 text-center">
+                            <label className="border-2 border-dashed border-white/20 rounded-lg p-12 text-center cursor-pointer hover:border-white/40 transition-colors block">
                                 <Upload className="w-12 h-12 mx-auto mb-4 text-[hsl(var(--text-secondary))]" />
                                 <p className="font-semibold mb-2">Drag & drop files or click to browse</p>
                                 <p className="text-sm text-[hsl(var(--text-secondary))]">
-                                    Supported: PDF, JPG, PNG (Max 10MB)
+                                    Supported: PDF, JPG, PNG (Max 10MB each)
                                 </p>
-                                <input type="file" multiple className="hidden" />
-                            </div>
+                                <input
+                                    type="file"
+                                    multiple
+                                    accept=".pdf,.jpg,.jpeg,.png"
+                                    onChange={handleFileUpload}
+                                    className="hidden"
+                                />
+                            </label>
 
-                            <div className="glass p-4 rounded-lg">
-                                <div className="flex items-center gap-3">
-                                    <FileText className="w-5 h-5 text-[hsl(var(--primary))]" />
-                                    <div className="flex-1">
-                                        <p className="font-semibold">government_id.pdf</p>
-                                        <p className="text-sm text-[hsl(var(--text-secondary))]">2.4 MB</p>
-                                    </div>
-                                    <span className="text-green-400">✓</span>
+                            {documents.length > 0 && (
+                                <div className="space-y-3">
+                                    <p className="text-sm font-semibold">Uploaded Files ({documents.length})</p>
+                                    {documents.map((doc, index) => (
+                                        <div key={index} className="glass p-4 rounded-lg">
+                                            <div className="flex items-center gap-3">
+                                                <FileText className="w-5 h-5 text-[hsl(var(--primary))]" />
+                                                <div className="flex-1">
+                                                    <p className="font-semibold">{doc.name}</p>
+                                                    <p className="text-sm text-[hsl(var(--text-secondary))]">
+                                                        {formatFileSize(doc.size)}
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    onClick={() => removeDocument(index)}
+                                                    className="text-red-400 hover:text-red-300 transition-colors"
+                                                >
+                                                    ✕
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-                            </div>
+                            )}
+
+                            {documents.length === 0 && (
+                                <div className="text-center p-8 glass rounded-lg">
+                                    <p className="text-[hsl(var(--text-secondary))]">No files uploaded yet</p>
+                                    <p className="text-sm text-[hsl(var(--text-secondary))] mt-2">
+                                        Documents help improve trust score but are optional
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -433,10 +515,25 @@ export default function CreateCampaignPage() {
                         </button>
                         <button
                             onClick={() => {
+                                if (step === 1) {
+                                    if (!title || !description || !fundingGoal || !duration) {
+                                        alert('Please fill all required fields (*)!');
+                                        return;
+                                    }
+                                    if (parseFloat(fundingGoal) <= 0) {
+                                        alert('Funding goal must be greater than 0!');
+                                        return;
+                                    }
+                                    if (parseInt(duration) < 1) {
+                                        alert('Duration must be at least 1 day!');
+                                        return;
+                                    }
+                                }
                                 if (step < 4) setStep(step + 1);
                                 else alert('Campaign created! (Mock submission)');
                             }}
-                            className="gradient-button px-8 py-3"
+                            disabled={step === 1 && (!title || !description || !fundingGoal || !duration)}
+                            className="gradient-button px-8 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {step === 4 ? 'Submit Campaign' : 'Next'}
                         </button>
