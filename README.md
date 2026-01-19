@@ -2,6 +2,7 @@
   <img src="./public/banner.png" alt="Aletheia Banner" width="100%" />
 </p>
 
+
 <p align="center">
   <img src="./public/logo.png" alt="Aletheia Logo" width="150" />
 </p>
