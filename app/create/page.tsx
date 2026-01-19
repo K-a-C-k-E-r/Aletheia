@@ -374,6 +374,7 @@ export default function CreateCampaignPage() {
                     {step === 4 && (
                         <div className="space-y-6">
                             <h2 className="text-2xl font-bold mb-6">Review & Deploy</h2>
+                            <div>
                                 <label className="block text-sm font-semibold mb-2">Use of Funds</label>
                                 <textarea
                                     rows={4}
@@ -393,55 +394,55 @@ export default function CreateCampaignPage() {
                         </div>
                     )}
 
-                {step === 4 && (
-                    <div className="space-y-6">
-                        <h2 className="text-2xl font-bold mb-6">Review & Submit</h2>
+                    {step === 4 && (
+                        <div className="space-y-6">
+                            <h2 className="text-2xl font-bold mb-6">Review & Submit</h2>
 
-                        <div className="space-y-4">
-                            <div className="glass p-4 rounded-lg">
-                                <p className="text-sm text-[hsl(var(--text-secondary))] mb-1">Campaign Title</p>
-                                <p className="font-semibold">Medical Aid for Children</p>
+                            <div className="space-y-4">
+                                <div className="glass p-4 rounded-lg">
+                                    <p className="text-sm text-[hsl(var(--text-secondary))] mb-1">Campaign Title</p>
+                                    <p className="font-semibold">Medical Aid for Children</p>
+                                </div>
+                                <div className="glass p-4 rounded-lg">
+                                    <p className="text-sm text-[hsl(var(--text-secondary))] mb-1">Funding Goal</p>
+                                    <p className="font-semibold">10 ETH</p>
+                                </div>
+                                <div className="glass p-4 rounded-lg">
+                                    <p className="text-sm text-[hsl(var(--text-secondary))] mb-1">Documents Uploaded</p>
+                                    <p className="font-semibold">1 file</p>
+                                </div>
                             </div>
-                            <div className="glass p-4 rounded-lg">
-                                <p className="text-sm text-[hsl(var(--text-secondary))] mb-1">Funding Goal</p>
-                                <p className="font-semibold">10 ETH</p>
-                            </div>
-                            <div className="glass p-4 rounded-lg">
-                                <p className="text-sm text-[hsl(var(--text-secondary))] mb-1">Documents Uploaded</p>
-                                <p className="font-semibold">1 file</p>
+
+                            <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+                                <p className="text-sm text-yellow-400">
+                                    ⚠️ Once submitted, your campaign will go through AI verification and community voting.
+                                    Funds will only be accessible after both verifications pass.
+                                </p>
                             </div>
                         </div>
+                    )}
 
-                        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
-                            <p className="text-sm text-yellow-400">
-                                ⚠️ Once submitted, your campaign will go through AI verification and community voting.
-                                Funds will only be accessible after both verifications pass.
-                            </p>
-                        </div>
+                    {/* Navigation Buttons */}
+                    <div className="flex justify-between mt-8 pt-6 border-t border-white/10">
+                        <button
+                            onClick={() => setStep(Math.max(1, step - 1))}
+                            disabled={step === 1}
+                            className="glass glass-hover px-6 py-3 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Previous
+                        </button>
+                        <button
+                            onClick={() => {
+                                if (step < 4) setStep(step + 1);
+                                else alert('Campaign created! (Mock submission)');
+                            }}
+                            className="gradient-button px-8 py-3"
+                        >
+                            {step === 4 ? 'Submit Campaign' : 'Next'}
+                        </button>
                     </div>
-                )}
-
-                {/* Navigation Buttons */}
-                <div className="flex justify-between mt-8 pt-6 border-t border-white/10">
-                    <button
-                        onClick={() => setStep(Math.max(1, step - 1))}
-                        disabled={step === 1}
-                        className="glass glass-hover px-6 py-3 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        Previous
-                    </button>
-                    <button
-                        onClick={() => {
-                            if (step < 4) setStep(step + 1);
-                            else alert('Campaign created! (Mock submission)');
-                        }}
-                        className="gradient-button px-8 py-3"
-                    >
-                        {step === 4 ? 'Submit Campaign' : 'Next'}
-                    </button>
-                </div>
-            </motion.div>
-        </main>
+                </motion.div>
+            </main>
         </div >
     );
 }
